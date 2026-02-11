@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Stream Timer</title>
 
-<!-- ВАЖНО: версия 2.3.0 -->
+<!-- ВАЖНО: Socket.IO v2 для DonationAlerts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
 <style>
@@ -185,7 +185,7 @@ function addManualTime(sec){
     totalSeconds += sec;
 }
 
-/* ===== SOCKET (v2.3.0) ===== */
+/* ===== SOCKET ===== */
 
 var socket = io.connect("https://socket.donationalerts.ru");
 
@@ -204,14 +204,15 @@ socket.on('connect_error', function(error) {
 
 socket.on('alert', function(msg) {
 
-    console.log("📨 Получено событие:", msg);
+    console.log("📨 ALERT:", msg);
 
-    if (msg.type !== "donation") return;
+    // 1 = донат
+    if (msg.alert_type != 1) return;
 
     var nick = msg.username;
     var amount = parseFloat(msg.amount);
 
-    if (amount < 1) return;
+    if (!amount || amount < 1) return;
 
     var minutesAdded = Math.floor(amount / pricePerMinute);
     if (minutesAdded <= 0) return;
