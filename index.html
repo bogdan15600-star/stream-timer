@@ -2,142 +2,92 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Stream Timer</title>
-
-<!-- Socket.IO v2 (ВАЖНО!) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-
+<title>Stream Timer PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
+
 body{
     margin:0;
     background:transparent;
     font-family:Arial, sans-serif;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    flex-direction:column;
+    color:white;
 }
 
-/* ТАЙМЕР */
+/* ===== ТАЙМЕР ===== */
+
 .timer-box{
-    background:rgba(0,0,0,0.75);
-    padding:25px 35px;
-    border-radius:20px;
+    position:absolute;
+    top:40px;
+    left:40px;
     text-align:center;
-    color:#00ff99;
-    box-shadow:0 0 30px rgba(0,255,150,0.6);
-}
-
-.time{
-    font-size:50px;
+    font-size:60px;
     font-weight:bold;
-    line-height:1.2;
+    line-height:1.1;
+    background:rgba(0,0,0,0.6);
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 0 30px #ff0000;
     transition:0.3s;
 }
 
 .red{
-    color:#ff2b2b !important;
-    text-shadow:0 0 15px red;
+    color:red;
+    text-shadow:0 0 20px red;
 }
 
-.shake{
-    animation:shake 0.5s;
-}
+/* ===== ОКНО ДОНАТОВ ===== */
 
-@keyframes shake{
-    0%{transform:translateX(0);}
-    25%{transform:translateX(-5px);}
-    50%{transform:translateX(5px);}
-    75%{transform:translateX(-5px);}
-    100%{transform:translateX(0);}
-}
-
-/* ОКНО ДОНАТОВ */
 .donate-box{
-    margin-top:20px;
-    background:rgba(0,0,0,0.8);
-    padding:15px 25px;
-    border-radius:15px;
+    position:absolute;
+    right:40px;
+    top:40px;
+    width:260px;
+    background:rgba(0,0,0,0.7);
+    padding:20px;
+    border-radius:20px;
     text-align:center;
-    color:white;
-    width:250px;
-    box-shadow:0 0 20px rgba(255,255,255,0.2);
+    box-shadow:0 0 25px #00ff99;
 }
 
 .last-donate{
+    margin-top:15px;
     font-size:18px;
-    margin-bottom:10px;
 }
 
-.price{
-    font-size:14px;
-    opacity:0.8;
+.price-box{
+    margin-top:15px;
+    font-size:18px;
+    color:#00ff99;
 }
 
-.price-anim{
-    animation:priceFlash 1s;
-}
-
-@keyframes priceFlash{
-    0%{color:white;}
-    50%{color:orange;}
-    100%{color:white;}
-}
-
-.admin-panel{
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    background:#200000;
-    padding:15px;
-    color:white;
-    text-align:center;
-}
-.admin-panel button{
-    margin:5px;
-    padding:8px 15px;
-    background:#a00000;
-    color:white;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-.admin-panel button:hover{
-    background:#ff0000;
-}
 </style>
 </head>
-
 <body>
 
-<div class="timer-box" id="timerBox">
-    <div class="time" id="timer">0д<br>00ч<br>00м<br>00с</div>
+<div class="timer-box" id="timer">
+0д<br>00ч<br>00м<br>00с
 </div>
 
 <div class="donate-box">
-    <div class="last-donate" id="lastDonate">Последний донат: —</div>
-    <div class="price" id="priceDisplay">5₽ = 1 минута</div>
-</div>
-
-<div class="admin-panel">
-    Цена:
-    <button onclick="changePrice(5)">+5₽</button>
-    <button onclick="changePrice(-5)">-5₽</button>
-    Время:
-    <button onclick="addManualTime(60)">+1 мин</button>
-    <button onclick="addManualTime(3600)">+1 час</button>
-    <button onclick="addManualTime(86400)">+1 день</button>
+    <div style="font-size:22px;">💎 Донаты</div>
+    <div class="last-donate" id="lastDonate">
+        Последний донат:<br>— нет —
+    </div>
+    <div class="price-box" id="priceBox">
+        5₽ = 1 минута
+    </div>
 </div>
 
 <script>
+
 let totalSeconds = 0;
 let pricePerMinute = 5;
+let lastDonationId = 0;
 
-/* ===== ТАЙМЕР ===== */
+// ===== ТАЙМЕР =====
 
 function updateTimer(){
+
     if(totalSeconds > 0){
         totalSeconds--;
     }
@@ -147,85 +97,78 @@ function updateTimer(){
     let minutes = Math.floor((totalSeconds % 3600)/60);
     let seconds = totalSeconds % 60;
 
-    document.getElementById("timer").innerHTML =
+    let timerElement = document.getElementById("timer");
+
+    timerElement.innerHTML =
         days + "д<br>" +
         String(hours).padStart(2,'0') + "ч<br>" +
         String(minutes).padStart(2,'0') + "м<br>" +
         String(seconds).padStart(2,'0') + "с";
 
     if(totalSeconds <= 60){
-        document.getElementById("timer").classList.add("red");
+        timerElement.classList.add("red");
     }else{
-        document.getElementById("timer").classList.remove("red");
+        timerElement.classList.remove("red");
     }
 }
 
 setInterval(updateTimer,1000);
 
-function addTime(seconds, nick, minutesAdded){
-    totalSeconds += seconds;
+// ===== ДОБАВЛЕНИЕ ВРЕМЕНИ =====
 
-    document.getElementById("timerBox").classList.add("shake");
-    setTimeout(()=>document.getElementById("timerBox").classList.remove("shake"),500);
+function addTime(seconds, nick, minutesAdded){
+
+    totalSeconds += seconds;
 
     document.getElementById("lastDonate").innerHTML =
         "Последний донат:<br><b style='color:#00ff99'>" +
         nick + "</b> +" + minutesAdded + " мин";
+
+    document.querySelector(".timer-box").style.transform="scale(1.1)";
+    setTimeout(()=>{
+        document.querySelector(".timer-box").style.transform="scale(1)";
+    },300);
 }
 
-function changePrice(amount){
-    pricePerMinute += amount;
-    if(pricePerMinute < 1) pricePerMinute = 1;
+// ===== ПРОВЕРКА ДОНАТОВ =====
 
-    let priceDisplay = document.getElementById("priceDisplay");
-    priceDisplay.innerHTML = pricePerMinute + "₽ = 1 минута";
-    priceDisplay.classList.add("price-anim");
-    setTimeout(()=>priceDisplay.classList.remove("price-anim"),1000);
+async function checkDonations(){
+
+    try{
+
+        const response = await fetch("https://www.donationalerts.com/api/v1/alerts/donations?limit=1", {
+            headers:{
+                "Authorization": "Bearer Zvk2S9bNr4AujcccGrTs"
+            }
+        });
+
+        const data = await response.json();
+
+        if(!data.data || data.data.length === 0) return;
+
+        const donation = data.data[0];
+
+        if(donation.id === lastDonationId) return;
+
+        lastDonationId = donation.id;
+
+        const nick = donation.username;
+        const amount = parseFloat(donation.amount);
+
+        const minutesAdded = Math.floor(amount / pricePerMinute);
+        if(minutesAdded <= 0) return;
+
+        addTime(minutesAdded * 60, nick, minutesAdded);
+
+        console.log("Донат обработан:", donation);
+
+    }catch(e){
+        console.log("Ошибка API:", e);
+    }
 }
 
-function addManualTime(sec){
-    totalSeconds += sec;
-}
+setInterval(checkDonations,5000);
 
-/* ===== SOCKET ===== */
-
-var socket = io.connect("https://socket.donationalerts.ru");
-
-socket.on('connect', function() {
-    console.log("✅ Подключено к DonationAlerts");
-
-    socket.emit('add-user', {
-        token: "SckIMM0CnAulnI4mlzL74swNoK8utSXhOCyXPJJD",
-        type: "alert_widget"
-    });
-});
-
-// Ловим ВСЕ возможные события
-socket.on('alert', handleDonation);
-socket.on('donation', handleDonation);
-socket.on('message', function(msg){
-    console.log("📨 MESSAGE:", msg);
-});
-
-function handleDonation(msg){
-
-    console.log("🔥 EVENT:", msg);
-
-    if (!msg) return;
-
-    // проверяем донат
-    if (msg.alert_type != 1 && msg.type !== "donation") return;
-
-    var nick = msg.username;
-    var amount = parseFloat(msg.amount);
-
-    if (!amount || amount < 1) return;
-
-    var minutesAdded = Math.floor(amount / pricePerMinute);
-    if (minutesAdded <= 0) return;
-
-    addTime(minutesAdded * 60, nick, minutesAdded);
-}
 </script>
 
 </body>
