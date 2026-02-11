@@ -4,23 +4,25 @@
 <meta charset="UTF-8">
 <title>Stream Timer PRO</title>
 
+<!-- Socket.IO v2 (ВАЖНО!) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
 <style>
 body{
     margin:0;
     background:transparent;
-    font-family:Arial;
+    font-family:Arial, sans-serif;
     color:white;
 }
 
+/* ===== ТАЙМЕР ===== */
 .timer-box{
     position:absolute;
     left:40px;
     top:40px;
     font-size:60px;
     font-weight:bold;
-    background:rgba(0,0,0,0.7);
+    background:rgba(0,0,0,0.75);
     padding:25px;
     border-radius:20px;
     text-align:center;
@@ -33,12 +35,13 @@ body{
     text-shadow:0 0 20px red;
 }
 
+/* ===== ДОНАТЫ ===== */
 .donate-box{
     position:absolute;
     right:40px;
     top:40px;
-    width:260px;
-    background:rgba(0,0,0,0.7);
+    width:280px;
+    background:rgba(0,0,0,0.75);
     padding:20px;
     border-radius:20px;
     text-align:center;
@@ -48,27 +51,37 @@ body{
 .price-box{
     margin-top:15px;
     color:#00ff99;
+    font-weight:bold;
 }
 </style>
 </head>
 <body>
 
+<!-- Таймер -->
 <div class="timer-box" id="timer">
 0д<br>00ч<br>00м<br>00с
 </div>
 
+<!-- Блок донатов -->
 <div class="donate-box">
     <div style="font-size:22px;">💎 Донаты</div>
-    <div id="lastDonate">Последний донат:<br>— нет —</div>
-    <div class="price-box">5₽ = 1 минута</div>
+    <div id="lastDonate" style="margin-top:15px;">
+        Последний донат:<br>— нет —
+    </div>
+    <div class="price-box" id="priceDisplay">
+        5₽ = 1 минута
+    </div>
 </div>
 
 <script>
 
+/* ===== НАСТРОЙКИ ===== */
 let totalSeconds = 0;
-let pricePerMinute = 5;
+let pricePerMinute = 5; // 5₽ = 1 минута
 
+/* ===== ТАЙМЕР ===== */
 function updateTimer(){
+
     if(totalSeconds > 0){
         totalSeconds--;
     }
@@ -78,42 +91,50 @@ function updateTimer(){
     let m = Math.floor((totalSeconds % 3600)/60);
     let s = totalSeconds % 60;
 
-    let el = document.getElementById("timer");
+    let timerEl = document.getElementById("timer");
 
-    el.innerHTML =
+    timerEl.innerHTML =
         d + "д<br>" +
         String(h).padStart(2,'0') + "ч<br>" +
         String(m).padStart(2,'0') + "м<br>" +
         String(s).padStart(2,'0') + "с";
 
+    // Если меньше минуты — красный
     if(totalSeconds <= 60){
-        el.classList.add("red");
-    }else{
-        el.classList.remove("red");
+        timerEl.classList.add("red");
+    } else {
+        timerEl.classList.remove("red");
     }
 }
 
 setInterval(updateTimer,1000);
 
+/* ===== ДОБАВЛЕНИЕ ВРЕМЕНИ ===== */
 function addTime(seconds, nick, minutes){
+
     totalSeconds += seconds;
 
     document.getElementById("lastDonate").innerHTML =
-        "Последний донат:<br><b style='color:#00ff99'>" +
-        nick + "</b> +" + minutes + " мин";
+        "Последний донат:<br>" +
+        "<b style='color:#00ff99'>" + nick + "</b><br>" +
+        "+ " + minutes + " мин";
 
-    document.querySelector(".timer-box").style.transform="scale(1.1)";
+    // лёгкая анимация
+    let box = document.querySelector(".timer-box");
+    box.style.transform = "scale(1.1)";
     setTimeout(()=>{
-        document.querySelector(".timer-box").style.transform="scale(1)";
+        box.style.transform = "scale(1)";
     },300);
 }
 
-/* ===== WebSocket ===== */
+/* ===== SOCKET.IO v2 (DonationAlerts) ===== */
 
-var socket = io("https://socket.donationalerts.ru");
+var socket = io("https://socket.donationalerts.ru", {
+    transports: ["polling"] // принудительно polling
+});
 
 socket.on("connect", function(){
-    console.log("✅ Подключено к DA");
+    console.log("✅ Подключено к DonationAlerts");
 
     socket.emit("add-user", {
         token: "Zvk2S9bNr4AujcccGrTs",
@@ -121,21 +142,21 @@ socket.on("connect", function(){
     });
 });
 
-socket.onAny(function(event, data){
+socket.on("alert", function(data){
 
-    console.log("🔥 EVENT:", event, data);
+    console.log("🔥 ALERT:", data);
 
     if (!data) return;
 
-    // Приводим alert_type к строке
     if (String(data.alert_type) === "1") {
 
-        let nick = data.username;
+        let nick = data.username || "Аноним";
         let amount = parseFloat(data.amount);
 
         if (!amount) return;
 
         let minutes = Math.floor(amount / pricePerMinute);
+
         if (minutes <= 0) return;
 
         addTime(minutes * 60, nick, minutes);
