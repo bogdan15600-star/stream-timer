@@ -60,7 +60,7 @@ body{
 <div class="donate-box">
     <div style="font-size:22px;">💎 Донаты</div>
     <div id="lastDonate">Последний донат:<br>— нет —</div>
-    <div class="price-box" id="priceBox">5₽ = 1 минута</div>
+    <div class="price-box">5₽ = 1 минута</div>
 </div>
 
 <script>
@@ -108,14 +108,12 @@ function addTime(seconds, nick, minutes){
     },300);
 }
 
-/* ===== WebSocket DonationAlerts ===== */
+/* ===== WebSocket ===== */
 
-var socket = io("https://socket.donationalerts.ru:443", {
-    transports: ["websocket"]
-});
+var socket = io("https://socket.donationalerts.ru");
 
 socket.on("connect", function(){
-    console.log("✅ Подключено");
+    console.log("✅ Подключено к DA");
 
     socket.emit("add-user", {
         token: "Zvk2S9bNr4AujcccGrTs",
@@ -123,20 +121,29 @@ socket.on("connect", function(){
     });
 });
 
-socket.on("connect_error", function(e){
-    console.log("❌ Ошибка подключения:", e);
+socket.onAny(function(event, data){
+
+    console.log("🔥 EVENT:", event, data);
+
+    if (!data) return;
+
+    // Приводим alert_type к строке
+    if (String(data.alert_type) === "1") {
+
+        let nick = data.username;
+        let amount = parseFloat(data.amount);
+
+        if (!amount) return;
+
+        let minutes = Math.floor(amount / pricePerMinute);
+        if (minutes <= 0) return;
+
+        addTime(minutes * 60, nick, minutes);
+    }
 });
 
-socket.on("new-donation", function(msg){
-    console.log("💰 Донат:", msg);
-
-    let nick = msg.username;
-    let amount = parseFloat(msg.amount);
-
-    let minutes = Math.floor(amount / pricePerMinute);
-    if(minutes <= 0) return;
-
-    addTime(minutes * 60, nick, minutes);
+socket.on("connect_error", function(e){
+    console.log("❌ Ошибка подключения:", e);
 });
 
 </script>
