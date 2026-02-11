@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Stream Timer PRO</title>
 
-<!-- Socket.IO v2 (ВАЖНО!) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
 <style>
@@ -15,7 +14,6 @@ body{
     color:white;
 }
 
-/* ===== ТАЙМЕР ===== */
 .timer-box{
     position:absolute;
     left:40px;
@@ -35,7 +33,6 @@ body{
     text-shadow:0 0 20px red;
 }
 
-/* ===== ДОНАТЫ ===== */
 .donate-box{
     position:absolute;
     right:40px;
@@ -57,31 +54,28 @@ body{
 </head>
 <body>
 
-<!-- Таймер -->
 <div class="timer-box" id="timer">
 0д<br>00ч<br>00м<br>00с
 </div>
 
-<!-- Блок донатов -->
 <div class="donate-box">
     <div style="font-size:22px;">💎 Донаты</div>
     <div id="lastDonate" style="margin-top:15px;">
         Последний донат:<br>— нет —
     </div>
-    <div class="price-box" id="priceDisplay">
+    <div class="price-box">
         5₽ = 1 минута
     </div>
 </div>
 
 <script>
 
-/* ===== НАСТРОЙКИ ===== */
 let totalSeconds = 0;
-let pricePerMinute = 5; // 5₽ = 1 минута
+let pricePerMinute = 5;
 
 /* ===== ТАЙМЕР ===== */
-function updateTimer(){
 
+function updateTimer(){
     if(totalSeconds > 0){
         totalSeconds--;
     }
@@ -99,7 +93,6 @@ function updateTimer(){
         String(m).padStart(2,'0') + "м<br>" +
         String(s).padStart(2,'0') + "с";
 
-    // Если меньше минуты — красный
     if(totalSeconds <= 60){
         timerEl.classList.add("red");
     } else {
@@ -110,27 +103,40 @@ function updateTimer(){
 setInterval(updateTimer,1000);
 
 /* ===== ДОБАВЛЕНИЕ ВРЕМЕНИ ===== */
-function addTime(seconds, nick, minutes){
 
-    totalSeconds += seconds;
+function processDonation(data){
+
+    if (!data) return;
+
+    console.log("🔥 ПОЛУЧЕН ДОНАТ:", data);
+
+    if (Number(data.alert_type) !== 1) return;
+
+    let nick = data.username || "Аноним";
+    let amount = parseFloat(data.amount);
+
+    if (!amount) return;
+
+    let minutes = Math.floor(amount / pricePerMinute);
+
+    if (minutes <= 0) return;
+
+    totalSeconds += minutes * 60;
 
     document.getElementById("lastDonate").innerHTML =
         "Последний донат:<br>" +
         "<b style='color:#00ff99'>" + nick + "</b><br>" +
         "+ " + minutes + " мин";
 
-    // лёгкая анимация
     let box = document.querySelector(".timer-box");
     box.style.transform = "scale(1.1)";
-    setTimeout(()=>{
-        box.style.transform = "scale(1)";
-    },300);
+    setTimeout(()=>{ box.style.transform="scale(1)"; },300);
 }
 
-/* ===== SOCKET.IO v2 (DonationAlerts) ===== */
+/* ===== SOCKET ===== */
 
 var socket = io("https://socket.donationalerts.ru", {
-    transports: ["polling"] // принудительно polling
+    transports:["polling"]
 });
 
 socket.on("connect", function(){
@@ -142,26 +148,11 @@ socket.on("connect", function(){
     });
 });
 
-socket.on("alert", function(data){
+/* СЛУШАЕМ ВСЕ ВАРИАНТЫ */
 
-    console.log("🔥 ALERT:", data);
-
-    if (!data) return;
-
-    if (String(data.alert_type) === "1") {
-
-        let nick = data.username || "Аноним";
-        let amount = parseFloat(data.amount);
-
-        if (!amount) return;
-
-        let minutes = Math.floor(amount / pricePerMinute);
-
-        if (minutes <= 0) return;
-
-        addTime(minutes * 60, nick, minutes);
-    }
-});
+socket.on("alert", processDonation);
+socket.on("donation", processDonation);
+socket.on("new-donation", processDonation);
 
 socket.on("connect_error", function(e){
     console.log("❌ Ошибка подключения:", e);
