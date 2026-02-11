@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Stream Timer</title>
 
-<!-- ВАЖНО: Socket.IO v2 для DonationAlerts -->
+<!-- Socket.IO v2 (ВАЖНО!) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
 <style>
@@ -135,6 +135,8 @@ body{
 let totalSeconds = 0;
 let pricePerMinute = 5;
 
+/* ===== ТАЙМЕР ===== */
+
 function updateTimer(){
     if(totalSeconds > 0){
         totalSeconds--;
@@ -198,16 +200,21 @@ socket.on('connect', function() {
     });
 });
 
-socket.on('connect_error', function(error) {
-    console.log("❌ Ошибка подключения:", error);
+// Ловим ВСЕ возможные события
+socket.on('alert', handleDonation);
+socket.on('donation', handleDonation);
+socket.on('message', function(msg){
+    console.log("📨 MESSAGE:", msg);
 });
 
-socket.on('alert', function(msg) {
+function handleDonation(msg){
 
-    console.log("📨 ALERT:", msg);
+    console.log("🔥 EVENT:", msg);
 
-    // 1 = донат
-    if (msg.alert_type != 1) return;
+    if (!msg) return;
+
+    // проверяем донат
+    if (msg.alert_type != 1 && msg.type !== "donation") return;
 
     var nick = msg.username;
     var amount = parseFloat(msg.amount);
@@ -218,7 +225,7 @@ socket.on('alert', function(msg) {
     if (minutesAdded <= 0) return;
 
     addTime(minutesAdded * 60, nick, minutesAdded);
-});
+}
 </script>
 
 </body>
