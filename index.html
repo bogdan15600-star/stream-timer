@@ -48,7 +48,7 @@ function tick() {
 
 setInterval(tick, 1000);
 
-var TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxNzQ5NiIsImp0aSI6ImIzY2M4Mjc0ZTJiYjg1NGZjZjE1NjUyOWEwYjQ3YzJiMWVkN2U1YWM3MzBjMjY1M2I2MDc4ZDcyYzhhYTM2MDJmOTk4NTQ2YWZkYTZlOGQ4IiwiaWF0IjoxNzcxMDA3NzE1LjYzMjEsIm5iZiI6MTc3MTAwNzcxNS42MzIyLCJleHAiOjE4MDI1NDM3MTUuNjIwNSwic3ViIjoiODE1MDE1Iiwic2NvcGVzIjpbIm9hdXRoLWRvbmF0aW9uLWluZGV4Il19.Oa4cS5JmCxADsQWS40OtRKOppoIGnTMKO_AkNC5cW62PD1XGg4DGvt1U9G2Bg7Av-k0c18CTLmkOa6aejPecmMfjvBwr1Ln060x8DMnD8Ujf2kb7LqkliDhdQY0Nf_HD2FyAU5bEaqN_erIn42Y7DJhkCTM5MMbbxSi0EjNIlLirUWcuezMZ0UUqk6IjIKVbYmtFTvxhPI3HJ_WYOYJiTmL768m8qs9czJLIwh8t_DSEfzQ4AoaDdsuLlf6qF7VB-WeKbsx48aout-SWohCSJ1aPScBQsYVXPQQMe8V4l2jpFbK_t0jDo24IP_eb7AJWdoZ8C1OvwajAH2FOibAHBiTVpICcwnuAB1kiDdOg4tdEXuBigjgLc02DW05gwCi3AuGR-6tnf0W44kpl2iuy9ZFSgSS1FoSgQdarTp4nc32ZLe-9b-lsE7fsWGsGXOSwFKJ_ST9A1XFYm9OOOyBtR2F1Ed5CKCCYdmbCFGtKoxZWnJYRE9PP2hFB4hrv79cebEyOEtb17KyBM1uxzDd8O4721yBHoHxHmiDpAqVHESeSzNvw5xp8UDQM6VhgYH3Gy8Kf0sQwC6VuPXkDZyPo8INjigjHn_OPCvc83olQt4Y0tv_MnnndZhtvvRpRLMWUUUXZUJcFUsZ2InCBOKhuxCrORIqVWVpRKG3HjabCMdA";
+var TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxNzQ5NyIsImp0aSI6IjZiNDE0OGM5YjM4OTI4ZTVhM2I1MDM5NWFkOWI1YjBmOTIxMzcyYjUyMTQ1OGExNjQ5MmM3ZWYxMTFlZDAyMmRkODgyOWZiZTU2YzdhODM1IiwiaWF0IjoxNzcxMDEwNDUwLjQ0MzQsIm5iZiI6MTc3MTAxMDQ1MC40NDM0LCJleHAiOjE4MDI1NDY0NTAuNDI4OCwic3ViIjoiODE1MDE1Iiwic2NvcGVzIjpbIm9hdXRoLWRvbmF0aW9uLWluZGV4Il19.E_HFya5WEDiSieKOtLKQan5oCQreqYPQ-3viawBOoz5n71b17zFbXt6sHVUUDggeS4Ma5iArUuxnd2KJS0zI-gPAbOkV-BwgYkRi8TJVvwjp_7Nd1-nX5gCChuA2HAmLg4TFzNKOHntYu13aHJagOdzTR5BJkh5TCT32aQzIRka7sJMagc3YwBJgwHcmao0Y0Hm3TndxbZh-gEWJeag4S0MpkmyidUeGYrFHCsav2YjKkPfgiKgd_aBeEJXzwFTTUyN7753ZPbvl2lyyk3y6ujx36S-HftxMx2g5GcUqitUpVaNc8MSBVm3f1Iyg4QZ5Swbivgo8iRhxgIRMAk8LwdVdqCqx3ygbe9gz92-8J-ejdQmxY8ErouNRFQ87hzsk3xT3DrTexBYjsGIHMvE_Rkvu5NdvMMF9-sg9AVIQpNc_bmoXRbfM_MJHfnwa32NCGckzHC6KZSXBGnSDUWnApj2VTKo05O86yZhfL7mkmG8cERo_DXaLTiK05cTnCRTKklOVGbzNQ8OuCwGK_X0xAA9e1IkMU188zdVAy4-5rin53wQwI-tY_uZ0kkEX8uMDbacfSmSM1qRGuSFGkMgeBKrxmf4m1H_yCAnJQI61fJy8VFkCpPL6yd3uGqtgy7nyuXXlavgIFCDTHwUjWedcZRyEkksdbKzI9ddUJ3G1tFE";
 
 var socket = io.connect("https://socket.donationalerts.ru", {
   transports: ["websocket"],
@@ -65,7 +65,6 @@ socket.on("connect", function() {
 });
 
 socket.on("donation", function(msg) {
-
   console.log("📩 Донат получен:", msg);
 
   var amount = parseFloat(msg.amount || 0);
@@ -76,7 +75,6 @@ socket.on("donation", function(msg) {
     updateDisplay();
     console.log("⏱ Добавлено секунд:", secondsToAdd);
   }
-
 });
 </script>
 
