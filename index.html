@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <title>Donation Timer</title>
 
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <!-- ВАЖНО: только версия 2.3.0 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
   <style>
     body {
@@ -48,30 +49,27 @@ function tick() {
 
 setInterval(tick, 1000);
 
-const socket = io("https://socket.donationalerts.ru", {
+var socket = io.connect("https://socket.donationalerts.ru", {
   transports: ["websocket"],
-  query: {
-    token: "Efdwa7C9eX44WyjXhVaOPobAocaE865fPGCAo5Ml"
-  }
+  query: "token=Efdwa7C9eX44WyjXhVaOPobAocaE865fPGCAo5Ml"
 });
 
-socket.on("connect", () => {
+socket.on("connect", function() {
   console.log("✅ Подключено к DonationAlerts");
 });
 
-socket.on("connect_error", (err) => {
+socket.on("connect_error", function(err) {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// Обработка доната
-socket.on("donation", function (msg) {
+socket.on("donation", function(msg) {
   console.log("💰 Донат получен:", msg);
 
-  let amount = parseFloat(msg.amount);
+  var amount = parseFloat(msg.amount);
 
-  // 🔥 5 рублей = 1 минута
-  let minutesToAdd = Math.floor(amount / 5);
-  let secondsToAdd = minutesToAdd * 60;
+  // 5 рублей = 1 минута
+  var minutesToAdd = Math.floor(amount / 5);
+  var secondsToAdd = minutesToAdd * 60;
 
   timeLeft += secondsToAdd;
   updateDisplay();
