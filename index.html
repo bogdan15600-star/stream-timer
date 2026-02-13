@@ -48,7 +48,12 @@ function tick() {
 
 setInterval(tick, 1000);
 
+
+/* ===== ТВОЙ ACCESS TOKEN ===== */
 var TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxNzQ5NyIsImp0aSI6IjZiNDE0OGM5YjM4OTI4ZTVhM2I1MDM5NWFkOWI1YjBmOTIxMzcyYjUyMTQ1OGExNjQ5MmM3ZWYxMTFlZDAyMmRkODgyOWZiZTU2YzdhODM1IiwiaWF0IjoxNzcxMDEwNDUwLjQ0MzQsIm5iZiI6MTc3MTAxMDQ1MC40NDM0LCJleHAiOjE4MDI1NDY0NTAuNDI4OCwic3ViIjoiODE1MDE1Iiwic2NvcGVzIjpbIm9hdXRoLWRvbmF0aW9uLWluZGV4Il19.E_HFya5WEDiSieKOtLKQan5oCQreqYPQ-3viawBOoz5n71b17zFbXt6sHVUUDggeS4Ma5iArUuxnd2KJS0zI-gPAbOkV-BwgYkRi8TJVvwjp_7Nd1-nX5gCChuA2HAmLg4TFzNKOHntYu13aHJagOdzTR5BJkh5TCT32aQzIRka7sJMagc3YwBJgwHcmao0Y0Hm3TndxbZh-gEWJeag4S0MpkmyidUeGYrFHCsav2YjKkPfgiKgd_aBeEJXzwFTTUyN7753ZPbvl2lyyk3y6ujx36S-HftxMx2g5GcUqitUpVaNc8MSBVm3f1Iyg4QZ5Swbivgo8iRhxgIRMAk8LwdVdqCqx3ygbe9gz92-8J-ejdQmxY8ErouNRFQ87hzsk3xT3DrTexBYjsGIHMvE_Rkvu5NdvMMF9-sg9AVIQpNc_bmoXRbfM_MJHfnwa32NCGckzHC6KZSXBGnSDUWnApj2VTKo05O86yZhfL7mkmG8cERo_DXaLTiK05cTnCRTKklOVGbzNQ8OuCwGK_X0xAA9e1IkMU188zdVAy4-5rin53wQwI-tY_uZ0kkEX8uMDbacfSmSM1qRGuSFGkMgeBKrxmf4m1H_yCAnJQI61fJy8VFkCpPL6yd3uGqtgy7nyuXXlavgIFCDTHwUjWedcZRyEkksdbKzI9ddUJ3G1tFE";
+
+
+/* ===== ПОДКЛЮЧЕНИЕ ===== */
 
 var socket = io.connect("https://socket.donationalerts.ru", {
   transports: ["websocket"],
@@ -64,17 +69,25 @@ socket.on("connect", function() {
   });
 });
 
-socket.on("donation", function(msg) {
-  console.log("📩 Донат получен:", msg);
 
-  var amount = parseFloat(msg.amount || 0);
-  var secondsToAdd = Math.floor(amount * 10);
+/* ===== НОВЫЙ ОБРАБОТЧИК СОБЫТИЙ ===== */
 
-  if (secondsToAdd > 0) {
-    timeLeft += secondsToAdd;
-    updateDisplay();
-    console.log("⏱ Добавлено секунд:", secondsToAdd);
+socket.on("event", function(msg) {
+
+  console.log("📩 СЫРОЕ СОБЫТИЕ:", msg);
+
+  if (msg.type === "donation") {
+
+    var amount = parseFloat(msg.data.amount || 0);
+    var secondsToAdd = Math.floor(amount * 10);
+
+    if (secondsToAdd > 0) {
+      timeLeft += secondsToAdd;
+      updateDisplay();
+      console.log("⏱ Добавлено секунд:", secondsToAdd);
+    }
   }
+
 });
 </script>
 
