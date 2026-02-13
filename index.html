@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>Stream Timer</title>
 
-<!-- ВАЖНО: Socket.IO версии 2.4.0 -->
-<script src="https://cdn.socket.io/2.4.0/socket.io.js"></script>
+<!-- Socket.IO v2 (совместим с DonationAlerts) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
 
 <style>
     body {
@@ -36,7 +36,7 @@
 
 <script>
 
-const CLIENT_ID = "17497"; // ← вставь свой client_id
+const CLIENT_ID = "17497";
 const PRICE_PER_MINUTE = 50; // 50 рублей = 1 минута
 
 // ===================
@@ -87,7 +87,7 @@ setInterval(() => {
 }, 1000);
 
 // ===================
-// SOCKET.IO (v2)
+// SOCKET.IO
 // ===================
 
 const token = localStorage.getItem("donation_token");
@@ -102,7 +102,6 @@ if (token) {
 
     socket.on("connect", () => {
         console.log("✅ Socket.IO подключен");
-
         socket.emit("add-user", { token: token });
     });
 
