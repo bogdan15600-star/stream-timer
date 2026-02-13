@@ -50,7 +50,7 @@ setInterval(tick, 1000);
 
 var socket = io.connect("https://socket.donationalerts.ru", {
   transports: ["websocket"],
-  query: "token=Hcg63XxgymViDKzivOfmtubm2mSz40aCZfMUTchK"
+  query: "token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxNzQ5NiIsImp0aSI6ImIzY2M4Mjc0ZTJiYjg1NGZjZjE1NjUyOWEwYjQ3YzJiMWVkN2U1YWM3MzBjMjY1M2I2MDc4ZDcyYzhhYTM2MDJmOTk4NTQ2YWZkYTZlOGQ4IiwiaWF0IjoxNzcxMDA3NzE1LjYzMjEsIm5iZiI6MTc3MTAwNzcxNS42MzIyLCJleHAiOjE4MDI1NDM3MTUuNjIwNSwic3ViIjoiODE1MDE1Iiwic2NvcGVzIjpbIm9hdXRoLWRvbmF0aW9uLWluZGV4Il19.Oa4cS5JmCxADsQWS40OtRKOppoIGnTMKO_AkNC5cW62PD1XGg4DGvt1U9G2Bg7Av-k0c18CTLmkOa6aejPecmMfjvBwr1Ln060x8DMnD8Ujf2kb7LqkliDhdQY0Nf_HD2FyAU5bEaqN_erIn42Y7DJhkCTM5MMbbxSi0EjNIlLirUWcuezMZ0UUqk6IjIKVbYmtFTvxhPI3HJ_WYOYJiTmL768m8qs9czJLIwh8t_DSEfzQ4AoaDdsuLlf6qF7VB-WeKbsx48aout-SWohCSJ1aPScBQsYVXPQQMe8V4l2jpFbK_t0jDo24IP_eb7AJWdoZ8C1OvwajAH2FOibAHBiTVpICcwnuAB1kiDdOg4tdEXuBigjgLc02DW05gwCi3AuGR-6tnf0W44kpl2iuy9ZFSgSS1FoSgQdarTp4nc32ZLe-9b-lsE7fsWGsGXOSwFKJ_ST9A1XFYm9OOOyBtR2F1Ed5CKCCYdmbCFGtKoxZWnJYRE9PP2hFB4hrv79cebEyOEtb17KyBM1uxzDd8O4721yBHoHxHmiDpAqVHESeSzNvw5xp8UDQM6VhgYH3Gy8Kf0sQwC6VuPXkDZyPo8INjigjHn_OPCvc83olQt4Y0tv_MnnndZhtvvRpRLMWUUUXZUJcFUsZ2InCBOKhuxCrORIqVWVpRKG3HjabCMdA"
 });
 
 socket.on("connect", function() {
@@ -61,25 +61,24 @@ socket.on("connect_error", function(err) {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// 🔥 Обработка донатов через событие alert
 socket.on("alert", function(msg) {
 
   console.log("📩 Получено событие:", msg);
 
   if (msg.type === "donation") {
 
-    var amount = parseFloat(msg.amount);
+    var amount = parseFloat(msg.amount || 0);
 
     // 5 рублей = 1 минута
-    var minutesToAdd = Math.floor(amount / 5);
-    var secondsToAdd = minutesToAdd * 60;
+    var secondsToAdd = Math.floor(amount / 5) * 60;
 
-    timeLeft += secondsToAdd;
-    updateDisplay();
+    if (secondsToAdd > 0) {
+      timeLeft += secondsToAdd;
+      updateDisplay();
+      console.log("⏱ Добавлено секунд:", secondsToAdd);
+    }
 
-    console.log("⏱ Добавлено минут:", minutesToAdd);
   }
-
 });
 </script>
 
