@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Stream Timer</title>
 
-<!-- Socket.IO v2 -->
+<!-- Socket.IO v2 (совместим с DonationAlerts) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
 
 <style>
@@ -37,9 +37,7 @@
 <script>
 
 const CLIENT_ID = "17497";
-const PRICE_PER_MINUTE = 50;
-
-let totalSeconds = 0;
+const PRICE_PER_MINUTE = 50; // 50 рублей = 1 минута
 
 // ===================
 // АВТОРИЗАЦИЯ
@@ -70,6 +68,8 @@ document.getElementById("loginBtn").onclick = () => {
 // ТАЙМЕР
 // ===================
 
+let totalSeconds = 0;
+
 function updateTimer() {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
@@ -87,7 +87,7 @@ setInterval(() => {
 }, 1000);
 
 // ===================
-// SOCKET.IO (ПРАВИЛЬНАЯ ПОДПИСКА)
+// SOCKET.IO
 // ===================
 
 const token = localStorage.getItem("donation_token");
@@ -96,42 +96,30 @@ if (token) {
 
     console.log("🔑 Токен найден, подключаемся...");
 
-    const socket = io("https://socket.donationalerts.ru", {
+    const socket = io("https://socket.donationalerts.ru:443", {
         transports: ["websocket"]
     });
 
     socket.on("connect", () => {
         console.log("✅ Socket.IO подключен");
-
-        // Регистрируем пользователя
         socket.emit("add-user", { token: token });
-
-        // Подписываемся на приватный канал донатов
-        socket.emit("subscribe", {
-            channel: "private-donations"
-        });
     });
 
-    // Ловим событие через message
-    socket.on("message", function(data) {
+    socket.on("donation", (msg) => {
+        console.log("💰 Новый донат:", msg);
 
-        if (data.type === "donation") {
+        const amount = msg.amount;
+        const minutes = amount / PRICE_PER_MINUTE;
 
-            console.log("💰 Новый донат:", data);
-
-            const amount = data.data.amount;
-            const minutes = amount / PRICE_PER_MINUTE;
-
-            totalSeconds += Math.floor(minutes * 60);
-            updateTimer();
-        }
+        totalSeconds += Math.floor(minutes * 60);
+        updateTimer();
     });
 
-    socket.on("connect_error", function(err) {
+    socket.on("connect_error", (err) => {
         console.error("🚨 Ошибка подключения:", err);
     });
 
-    socket.on("disconnect", function() {
+    socket.on("disconnect", () => {
         console.warn("🔌 Соединение разорвано");
     });
 
