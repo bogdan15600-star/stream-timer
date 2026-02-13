@@ -4,30 +4,52 @@
   <meta charset="UTF-8">
   <title>Donation Timer</title>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
   <style>
     body {
       background: black;
       color: white;
       text-align: center;
       font-family: Arial;
+      margin: 0;
+      overflow: hidden;
     }
+
     #timer {
       font-size: 80px;
-      margin-top: 100px;
+      margin-top: 40px;
+    }
+
+    #donations {
+      margin-top: 40px;
+    }
+
+    iframe {
+      border: none;
+      width: 100%;
+      height: 400px;
     }
   </style>
 </head>
+
 <body>
 
 <h1>Donation Timer</h1>
 <div id="timer">00:00</div>
 
+<div id="donations">
+  <iframe 
+    src="https://www.donationalerts.com/widget/lastdonations?alert_type=1,4,6,8,7,10,9,3,2,5,11,12,13,14,15,16,17,18,19,20,27,28,29,30,31,32,33,34,35,36&limit=100">
+  </iframe>
+</div>
+
 <script>
-let timeLeft = 0; // секунды
+let timeLeft = 0;
 
 function updateDisplay() {
   let minutes = Math.floor(timeLeft / 60);
   let seconds = timeLeft % 60;
+
   document.getElementById("timer").innerText =
     String(minutes).padStart(2, '0') + ":" +
     String(seconds).padStart(2, '0');
@@ -42,7 +64,7 @@ function tick() {
 
 setInterval(tick, 1000);
 
-// ===== ВСТАВЬ СЮДА СВОЙ ACCESS TOKEN =====
+// ===== ВСТАВЬ СВОЙ ACCESS TOKEN =====
 const socket = io("wss://socket.donationalerts.ru:443", {
   transports: ["websocket"],
   query: {
