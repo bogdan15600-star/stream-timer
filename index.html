@@ -60,16 +60,25 @@ socket.on("connect_error", function(err) {
   console.log("❌ Ошибка подключения:", err);
 });
 
-socket.on("donation", function(msg) {
-  console.log("💰 Донат получен:", msg);
+// 🔥 Правильная обработка донатов
+socket.on("alert", function(msg) {
 
-  var amount = parseFloat(msg.amount);
+  console.log("📩 Получено событие:", msg);
 
-  var minutesToAdd = Math.floor(amount / 5);
-  var secondsToAdd = minutesToAdd * 60;
+  if (msg.type === "donation") {
 
-  timeLeft += secondsToAdd;
-  updateDisplay();
+    var amount = parseFloat(msg.amount);
+
+    // 5 рублей = 1 минута
+    var minutesToAdd = Math.floor(amount / 5);
+    var secondsToAdd = minutesToAdd * 60;
+
+    timeLeft += secondsToAdd;
+    updateDisplay();
+
+    console.log("⏱ Добавлено минут:", minutesToAdd);
+  }
+
 });
 </script>
 
