@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Stream Timer</title>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<!-- ВАЖНО: Socket.IO версии 2.4.0 -->
+<script src="https://cdn.socket.io/2.4.0/socket.io.js"></script>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -33,17 +36,15 @@
 
 <script>
 
-const CLIENT_ID = "17497"; // ← вставь сюда свой client_id
+const CLIENT_ID = "17497"; // ← вставь свой client_id
 const PRICE_PER_MINUTE = 50; // 50 рублей = 1 минута
 
 // ===================
 // АВТОРИЗАЦИЯ
 // ===================
 
-const hash = window.location.hash;
-
-if (hash.includes("access_token")) {
-    const params = new URLSearchParams(hash.substring(1));
+if (window.location.hash.includes("access_token")) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = params.get("access_token");
 
     localStorage.setItem("donation_token", accessToken);
@@ -54,7 +55,11 @@ if (hash.includes("access_token")) {
 document.getElementById("loginBtn").onclick = () => {
     const redirectUri = window.location.origin + window.location.pathname;
 
-    const authUrl = `https://www.donationalerts.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=oauth-donation-index`;
+    const authUrl =
+        `https://www.donationalerts.com/oauth/authorize?client_id=${CLIENT_ID}` +
+        `&redirect_uri=${redirectUri}` +
+        `&response_type=token` +
+        `&scope=oauth-donation-index`;
 
     window.location.href = authUrl;
 };
@@ -82,7 +87,7 @@ setInterval(() => {
 }, 1000);
 
 // ===================
-// SOCKET.IO
+// SOCKET.IO (v2)
 // ===================
 
 const token = localStorage.getItem("donation_token");
