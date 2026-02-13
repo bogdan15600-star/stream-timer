@@ -13,6 +13,7 @@
       color: white;
       text-align: center;
       font-family: Arial;
+      margin: 0;
     }
 
     #timer {
@@ -49,7 +50,7 @@ setInterval(tick, 1000);
 
 var socket = io.connect("https://socket.donationalerts.ru", {
   transports: ["websocket"],
-  query: "token=Efdwa7C9eX44WyjXhVaOPobAocaE865fPGCAo5Ml"
+  query: "token=Hcg63XxgymViDKzivOfmtubm2mSz40aCZfMUTchK"
 });
 
 socket.on("connect", function() {
@@ -60,7 +61,7 @@ socket.on("connect_error", function(err) {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// 🔥 Правильная обработка донатов
+// 🔥 Обработка донатов через событие alert
 socket.on("alert", function(msg) {
 
   console.log("📩 Получено событие:", msg);
