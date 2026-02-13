@@ -1,94 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Donation Timer</title>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-  <link rel="icon" href="data:,">
-
-  <style>
-    body {
-      background: black;
-      color: white;
-      text-align: center;
-      font-family: Arial;
-      margin: 0;
-    }
-
-    #timer {
-      font-size: 100px;
-      margin-top: 150px;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Stream Timer</title>
 </head>
 <body>
 
-<div id="timer">00:00</div>
+<h1>Stream Timer</h1>
+
+<button id="authBtn">Авторизоваться через DonationAlerts</button>
 
 <script>
-var timeLeft = 0;
+    const CLIENT_ID = "17497";
+    const REDIRECT_URI = "https://bogdan15600-star.github.io/stream-timer/";
 
-function updateDisplay() {
-  var minutes = Math.floor(timeLeft / 60);
-  var seconds = timeLeft % 60;
+    // Кнопка авторизации
+    document.getElementById("authBtn").addEventListener("click", () => {
+        const authUrl = `https://www.donationalerts.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=oauth-donation-index`;
+        window.location.href = authUrl;
+    });
 
-  document.getElementById("timer").innerText =
-    String(minutes).padStart(2, '0') + ":" +
-    String(seconds).padStart(2, '0');
-}
+    // Проверяем, есть ли токен в URL
+    if (window.location.hash.includes("access_token")) {
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = params.get("access_token");
 
-function tick() {
-  if (timeLeft > 0) {
-    timeLeft--;
-    updateDisplay();
-  }
-}
+        console.log("Токен получен:", accessToken);
 
-setInterval(tick, 1000);
+        // Можно сохранить токен
+        localStorage.setItem("donation_token", accessToken);
 
-
-/* ===== ТВОЙ ACCESS TOKEN ===== */
-var TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxNzQ5NyIsImp0aSI6IjZiNDE0OGM5YjM4OTI4ZTVhM2I1MDM5NWFkOWI1YjBmOTIxMzcyYjUyMTQ1OGExNjQ5MmM3ZWYxMTFlZDAyMmRkODgyOWZiZTU2YzdhODM1IiwiaWF0IjoxNzcxMDEwNDUwLjQ0MzQsIm5iZiI6MTc3MTAxMDQ1MC40NDM0LCJleHAiOjE4MDI1NDY0NTAuNDI4OCwic3ViIjoiODE1MDE1Iiwic2NvcGVzIjpbIm9hdXRoLWRvbmF0aW9uLWluZGV4Il19.E_HFya5WEDiSieKOtLKQan5oCQreqYPQ-3viawBOoz5n71b17zFbXt6sHVUUDggeS4Ma5iArUuxnd2KJS0zI-gPAbOkV-BwgYkRi8TJVvwjp_7Nd1-nX5gCChuA2HAmLg4TFzNKOHntYu13aHJagOdzTR5BJkh5TCT32aQzIRka7sJMagc3YwBJgwHcmao0Y0Hm3TndxbZh-gEWJeag4S0MpkmyidUeGYrFHCsav2YjKkPfgiKgd_aBeEJXzwFTTUyN7753ZPbvl2lyyk3y6ujx36S-HftxMx2g5GcUqitUpVaNc8MSBVm3f1Iyg4QZ5Swbivgo8iRhxgIRMAk8LwdVdqCqx3ygbe9gz92-8J-ejdQmxY8ErouNRFQ87hzsk3xT3DrTexBYjsGIHMvE_Rkvu5NdvMMF9-sg9AVIQpNc_bmoXRbfM_MJHfnwa32NCGckzHC6KZSXBGnSDUWnApj2VTKo05O86yZhfL7mkmG8cERo_DXaLTiK05cTnCRTKklOVGbzNQ8OuCwGK_X0xAA9e1IkMU188zdVAy4-5rin53wQwI-tY_uZ0kkEX8uMDbacfSmSM1qRGuSFGkMgeBKrxmf4m1H_yCAnJQI61fJy8VFkCpPL6yd3uGqtgy7nyuXXlavgIFCDTHwUjWedcZRyEkksdbKzI9ddUJ3G1tFE";
-
-
-/* ===== ПОДКЛЮЧЕНИЕ ===== */
-
-var socket = io.connect("https://socket.donationalerts.ru", {
-  transports: ["websocket"],
-  query: "token=" + TOKEN
-});
-
-socket.on("connect", function() {
-  console.log("✅ Подключено к DonationAlerts");
-
-  socket.emit("add-user", {
-    token: TOKEN,
-    type: "minor"
-  });
-});
-
-
-/* ===== НОВЫЙ ОБРАБОТЧИК СОБЫТИЙ ===== */
-
-socket.on("event", function(msg) {
-
-  console.log("📩 СЫРОЕ СОБЫТИЕ:", msg);
-
-  if (msg.type === "donation") {
-
-    var amount = parseFloat(msg.data.amount || 0);
-    var secondsToAdd = Math.floor(amount * 10);
-
-    if (secondsToAdd > 0) {
-      timeLeft += secondsToAdd;
-      updateDisplay();
-      console.log("⏱ Добавлено секунд:", secondsToAdd);
+        alert("Авторизация успешна!");
     }
-  }
-
-});
 </script>
 
 </body>
