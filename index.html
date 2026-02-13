@@ -49,12 +49,13 @@ function tick() {
 setInterval(tick, 1000);
 
 // ==========================
-// ВСТАВЬ СВОЙ ACCESS TOKEN
+// ПОДКЛЮЧЕНИЕ DONATIONALERTS
 // ==========================
+
 const socket = io("https://socket.donationalerts.ru", {
   transports: ["websocket"],
   query: {
-    token: "Zvk2S9bNr4AujcccGrTs"
+    token: "Efdwa7C9eX44WyjXhVaOPobAocaE865fPGCAo5Ml"
   }
 });
 
@@ -66,7 +67,7 @@ socket.on("connect_error", (err) => {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// Логируем ВСЕ события
+// Показываем ВСЕ события
 socket.onAny((event, ...args) => {
   console.log("📩 Событие:", event, args);
 });
