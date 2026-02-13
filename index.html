@@ -37,7 +37,7 @@
 <script>
 
 const CLIENT_ID = "17497";
-const PRICE_PER_MINUTE = 50; // 50 рублей = 1 минута
+const PRICE_PER_MINUTE = 5; // ✅ 5 рублей = 1 минута
 
 // ===================
 // АВТОРИЗАЦИЯ
@@ -108,7 +108,9 @@ if (token) {
     socket.on("donation", (msg) => {
         console.log("💰 Новый донат:", msg);
 
-        const amount = msg.amount;
+        if (!msg.data || !msg.data.amount) return;
+
+        const amount = parseFloat(msg.data.amount);
         const minutes = amount / PRICE_PER_MINUTE;
 
         totalSeconds += Math.floor(minutes * 60);
