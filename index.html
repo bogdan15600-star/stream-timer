@@ -13,16 +13,14 @@
       color: white;
       text-align: center;
       font-family: Arial;
-      margin: 0;
     }
 
     #timer {
       font-size: 80px;
-      margin-top: 80px;
+      margin-top: 100px;
     }
   </style>
 </head>
-
 <body>
 
 <h1>Donation Timer</h1>
@@ -62,21 +60,11 @@ socket.on("connect_error", function(err) {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// 🔥 Лог всех входящих событий (v2 способ)
-var onevent = socket.onevent;
-socket.onevent = function(packet) {
-  var args = packet.data || [];
-  console.log("📩 Событие:", args);
-  onevent.call(this, packet);
-};
-
-// Обработка доната
 socket.on("donation", function(msg) {
   console.log("💰 Донат получен:", msg);
 
   var amount = parseFloat(msg.amount);
 
-  // 5 рублей = 1 минута
   var minutesToAdd = Math.floor(amount / 5);
   var secondsToAdd = minutesToAdd * 60;
 
