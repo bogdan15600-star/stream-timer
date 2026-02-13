@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <title>Donation Timer</title>
 
-  <!-- ВАЖНО: версия 2.x -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-
   <link rel="icon" href="data:,">
 
   <style>
@@ -64,10 +62,13 @@ socket.on("connect_error", function(err) {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// 🔥 Логируем ВСЕ события от сервера
-socket.onAny(function(event, data) {
-  console.log("📩 Событие:", event, data);
-});
+// 🔥 Лог всех входящих событий (v2 способ)
+var onevent = socket.onevent;
+socket.onevent = function(packet) {
+  var args = packet.data || [];
+  console.log("📩 Событие:", args);
+  onevent.call(this, packet);
+};
 
 // Обработка доната
 socket.on("donation", function(msg) {
