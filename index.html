@@ -1,37 +1,99 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Stream Timer</title>
+<meta charset="UTF-8">
+<title>Stream Timer</title>
+<style>
+    body { font-family: Arial; text-align: center; background: #111; color: white; }
+    #timer { font-size: 60px; margin: 20px; }
+    button { padding: 10px 20px; font-size: 18px; cursor: pointer; }
+</style>
 </head>
 <body>
 
 <h1>Stream Timer</h1>
 
+<div id="timer">00:00</div>
+
 <button id="authBtn">Авторизоваться через DonationAlerts</button>
 
 <script>
-    const CLIENT_ID = "17497";
-    const REDIRECT_URI = "https://bogdan15600-star.github.io/stream-timer/";
+const CLIENT_ID = "17497";
+const REDIRECT_URI = "https://bogdan15600-star.github.io/stream-timer/";
+const PRICE_PER_MINUTE = 50; // 50 рублей = 1 минута
 
-    // Кнопка авторизации
-    document.getElementById("authBtn").addEventListener("click", () => {
-        const authUrl = `https://www.donationalerts.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=oauth-donation-index`;
-        window.location.href = authUrl;
-    });
+let totalSeconds = 0;
+let socket = null;
 
-    // Проверяем, есть ли токен в URL
-    if (window.location.hash.includes("access_token")) {
-        const params = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = params.get("access_token");
+// =======================
+// Авторизация
+// =======================
+document.getElementById("authBtn").addEventListener("click", () => {
+    const authUrl = `https://www.donationalerts.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=oauth-donation-index`;
+    window.location.href = authUrl;
+});
 
-        console.log("Токен получен:", accessToken);
+// Получение токена
+if (window.location.hash.includes("access_token")) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = params.get("access_token");
 
-        // Можно сохранить токен
-        localStorage.setItem("donation_token", accessToken);
+    localStorage.setItem("donation_token", accessToken);
+    alert("Авторизация успешна!");
+    window.location.hash = "";
+}
 
-        alert("Авторизация успешна!");
+// =======================
+// Подключение WebSocket
+// =======================
+const token = localStorage.getItem("donation_token");
+
+if (token) {
+    socket = new WebSocket(`wss://socket.donationalerts.ru:443`);
+
+    socket.onopen = () => {
+        console.log("WebSocket подключен");
+
+        socket.send(JSON.stringify({
+            type: "subscribe",
+            channel: `private-donations.${token}`
+        }));
+    };
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "donation") {
+            const amount = data.data.amount;
+            console.log("Донат:", amount);
+
+            const minutes = amount / PRICE_PER_MINUTE;
+            totalSeconds += Math.floor(minutes * 60);
+
+            updateTimer();
+        }
+    };
+}
+
+// =======================
+// Таймер
+// =======================
+function updateTimer() {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    document.getElementById("timer").innerText =
+        `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+}
+
+// Обратный отсчет
+setInterval(() => {
+    if (totalSeconds > 0) {
+        totalSeconds--;
+        updateTimer();
     }
+}, 1000);
+
 </script>
 
 </body>
