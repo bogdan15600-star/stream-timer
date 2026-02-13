@@ -48,10 +48,6 @@ function tick() {
 
 setInterval(tick, 1000);
 
-// ==========================
-// ПОДКЛЮЧЕНИЕ DONATIONALERTS
-// ==========================
-
 const socket = io("https://socket.donationalerts.ru", {
   transports: ["websocket"],
   query: {
@@ -67,17 +63,14 @@ socket.on("connect_error", (err) => {
   console.log("❌ Ошибка подключения:", err);
 });
 
-// Показываем ВСЕ события
-socket.onAny((event, ...args) => {
-  console.log("📩 Событие:", event, args);
-});
-
 // Обработка доната
 socket.on("donation", function (msg) {
   console.log("💰 Донат получен:", msg);
 
   let amount = parseFloat(msg.amount);
-  let minutesToAdd = Math.floor(amount / 10);
+
+  // 🔥 5 рублей = 1 минута
+  let minutesToAdd = Math.floor(amount / 5);
   let secondsToAdd = minutesToAdd * 60;
 
   timeLeft += secondsToAdd;
