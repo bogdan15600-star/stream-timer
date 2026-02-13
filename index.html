@@ -1,12 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Stream Timer</title>
+<style>
+    body { font-family: Arial; text-align: center; background: #111; color: white; }
+    #timer { font-size: 60px; margin: 20px; }
+    button { padding: 10px 20px; font-size: 18px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h1>Stream Timer</h1>
+
+<div id="timer">00:00</div>
+
+<button id="authBtn">Авторизоваться через DonationAlerts</button>
+
+<script>
+const CLIENT_ID = "ВСТАВЬ_СЮДА_CLIENT_ID";
+const REDIRECT_URI = "https://bogdan15600-star.github.io/stream-timer/";
+const PRICE_PER_MINUTE = 50; // 50 рублей = 1 минута
+
+let totalSeconds = 0;
+let socket = null;
+
+// =======================
+// Авторизация
+// =======================
+document.getElementById("authBtn").addEventListener("click", () => {
+    const authUrl = `https://www.donationalerts.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=oauth-donation-index`;
+    window.location.href = authUrl;
+});
+
+// Получение токена
+if (window.location.hash.includes("access_token")) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = params.get("access_token");
+
+    localStorage.setItem("donation_token", accessToken);
+    alert("Авторизация успешна!");
+    window.location.hash = "";
+}
+
+// =======================
+// Подключение WebSocket
+// =======================
 const token = localStorage.getItem("donation_token");
 
 if (token) {
+    socket = new WebSocket(`wss://socket.donationalerts.ru:443`);
 
-    socket = new WebSocket("wss://socket.donationalerts.ru:443");
-
-    // УСПЕШНОЕ ПОДКЛЮЧЕНИЕ
     socket.onopen = () => {
-        console.log("✅ WebSocket подключен");
+        console.log("WebSocket подключен");
 
         socket.send(JSON.stringify({
             type: "subscribe",
@@ -14,35 +60,41 @@ if (token) {
         }));
     };
 
-    // ПОЛУЧЕНИЕ СООБЩЕНИЙ
     socket.onmessage = (event) => {
-        console.log("📩 Сообщение от сервера:", event.data);
+        const data = JSON.parse(event.data);
 
-        try {
-            const data = JSON.parse(event.data);
+        if (data.type === "donation") {
+            const amount = data.data.amount;
+            console.log("Донат:", amount);
 
-            if (data.type === "donation") {
-                const amount = data.data.amount;
-                console.log("💰 Донат:", amount);
-            }
+            const minutes = amount / PRICE_PER_MINUTE;
+            totalSeconds += Math.floor(minutes * 60);
 
-        } catch (e) {
-            console.error("❌ Ошибка парсинга JSON:", e);
+            updateTimer();
         }
     };
-
-    // ОШИБКА СОКЕТА
-    socket.onerror = (error) => {
-        console.error("🚨 WebSocket ошибка:", error);
-    };
-
-    // ЗАКРЫТИЕ СОЕДИНЕНИЯ
-    socket.onclose = (event) => {
-        console.error("🔌 WebSocket закрыт");
-        console.log("Код:", event.code);
-        console.log("Причина:", event.reason);
-    };
-
-} else {
-    console.warn("⚠️ Токен не найден. Нужно авторизоваться.");
 }
+
+// =======================
+// Таймер
+// =======================
+function updateTimer() {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    document.getElementById("timer").innerText =
+        `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+}
+
+// Обратный отсчет
+setInterval(() => {
+    if (totalSeconds > 0) {
+        totalSeconds--;
+        updateTimer();
+    }
+}, 1000);
+
+</script>
+
+</body>
+</html>
