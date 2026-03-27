@@ -1,862 +1,435 @@
-
-
-
-Принять предложение
-Вы сказали:
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Боевой урон HUD</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
-
-<style>
-body {
-  margin: 0;
-  background: transparent;
-  font-family: 'Orbitron', sans-serif;
-  color: #fff;
-}
-
-.viewer {
-  width: 520px;
-  padding: 20px;
-}
-
-.hud {
-  padding: 20px;
-  border-radius: 16px;
-  border: 2px solid #ff2a2a;
-  background: rgba(30,0,0,0.85);
-  box-shadow: 0 0 30px rgba(255,0,0,0.8);
-}
-
-.title {
-  text-align: center;
-  font-size: 20px;
-  color: #ff3b3b;
-  margin-bottom: 14px;
-  text-shadow: 0 0 12px red;
-}
-
-.label {
-  font-size: 14px;
-  color: #ff9b9b;
-}
-
-.value {
-  font-size: 34px;
-  color: #ffcc00;
-}
-
-.price {
-  margin-top: 8px;
-  font-size: 14px;
-  color: orange;
-  letter-spacing: 1.5px;
-  font-weight: 600;
-}
-
-.price-notice {
-  margin-top: 6px;
-  font-size: 14px;
-  text-align: center;
-  font-weight: 600;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.price-up-notice {
-  color: #00ff66;
-  text-shadow: 0 0 10px #00ff66;
-}
-
-.price-down-notice {
-  color: #ff3333;
-  text-shadow: 0 0 10px red;
-}
-
-.show-notice {
-  opacity: 1;
-}
-
-.progress {
-  height: 14px;
-  background: #300;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid red;
-  margin: 10px 0;
-}
-
-/* 🔥 ОГНЕННАЯ ШКАЛА */
-.fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #ff0000, #ff6600, #ffaa00, #ff0000);
-  background-size: 200% 100%;
-  animation: fireMove 1s linear infinite;
-  transition: width 0.4s ease;
-}
-
-@keyframes fireMove {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.admin {
-  margin-top: 40px;
-  padding: 20px;
-  background: #0b0000;
-  border-top: 3px solid red;
-}
-
-input, button {
-  padding: 8px 12px;
-  margin: 4px;
-  font-size: 16px;
-  background: #300;
-  color: #fff;
-  border: 1px solid red;
-  cursor: pointer;
-}
-</style>
-</head>
-
-<body>
-
-<div class="viewer">
-  <div class="hud" id="hud">
-    <div class="title">⚔️ Боевой урон — только в рандоме ⚔️</div>
-
-    <div class="label">Нанесено:</div>
-    <div class="value" id="viewerCurrent">0</div>
-
-    <div class="progress">
-      <div class="fill" id="bar"></div>
-    </div>
-
-    <div class="label">Осталось:</div>
-    <div class="value" id="viewerLeft">0</div>
-
-    <div class="price" id="priceText">100 ₽ = 2000 урона</div>
-    <div id="priceNotice" class="price-notice"></div>
-
-    <div id="winContainer"></div>
-  </div>
-</div>
-
-<div class="admin">
-  <div class="label">Нанесено (добавить):</div>
-  <input type="number" id="adminAddDamage" placeholder="Добавить урон">
-  <button onclick="addDamage()">🔥 Добавить</button>
-
-  <br><br>
-
-  <div class="label">Всего нужно нанести:</div>
-  <input type="number" id="adminGoal" placeholder="Цель урона">
-  <button onclick="setGoal()">🎯 Установить цель</button>
-
-  <br><br>
-
-  <div class="label">Цена за донат:</div>
-  <button onclick="pricePlus()">💰 +50 ₽</button>
-  <button onclick="priceMinus()">💰 -50 ₽</button>
-
-  <br><br>
-
-  <div class="label">Ввести донат (в рублях):</div>
-  <input type="number" id="adminDonate" placeholder="Сумма ₽">
-  <button onclick="addDonate()">💸 Добавить донат</button>
-</div>
-
-<script>
-let state = {
-  current: 0,
-  goal: 0,
-  price: 100,
-  damagePerPrice: 2000
-};
-
-function update() {
-  const left = Math.max(0, state.goal - state.current);
-  const percent = state.goal > 0
-    ? Math.min(100, (state.current / state.goal) * 100)
-    : 0;
-
-  viewerCurrent.textContent = Math.floor(state.current);
-  viewerLeft.textContent = Math.floor(left);
-  bar.style.width = percent + "%";
-  priceText.textContent = ${state.price} ₽ = ${state.damagePerPrice} урона;
-}
-
-function showPriceNotice(text, type) {
-  const notice = document.getElementById("priceNotice");
-  notice.textContent = text;
-  notice.className = "price-notice show-notice " + type;
-
-  setTimeout(() => {
-    notice.className = "price-notice";
-  }, 2000);
-}
-
-function pricePlus() {
-  state.price += 50;
-  showPriceNotice("Цена увеличена на 50 ₽", "price-up-notice");
-  update();
-}
-
-function priceMinus() {
-  if (state.price > 50) {
-    state.price -= 50;
-    showPriceNotice("Цена уменьшена на 50 ₽", "price-down-notice");
-    update();
-  }
-}
-
-function addDamage() {
-  const value = Number(adminAddDamage.value);
-  if (value <= 0) return;
-  state.current += value;
-  adminAddDamage.value = "";
-  update();
-}
-
-function setGoal() {
-  const value = Number(adminGoal.value);
-  if (value <= 0) return;
-  state.goal = value;
-  adminGoal.value = "";
-  update();
-}
-
-function addDonate() {
-  const rub = Number(adminDonate.value);
-  if (rub <= 0) return;
-
-  const damage = (rub / state.price) * state.damagePerPrice;
-  state.goal += damage;
-
-  adminDonate.value = "";
-  update();
-}
-
-/* Всё через Enter */
-
-adminAddDamage.addEventListener("keydown", e => {
-  if (e.key === "Enter") addDamage();
-});
-
-adminGoal.addEventListener("keydown", e => {
-  if (e.key === "Enter") setGoal();
-});
-
-adminDonate.addEventListener("keydown", e => {
-  if (e.key === "Enter") addDonate();
-});
-
-update();
-</script>
-
-</body>
-</html>
-
-ChatGPT сказал:
-Ты скинул готовый HTML-файл HUD’а. Скажи, что именно нужно сделать:
-
-🔧 Добавить сохранение прогресса (localStorage)?
-
-🌐 Сделать версию для OBS (без админки)?
-
-🎨 Улучшить анимации / сделать более «огненный» стиль?
-
-💾 Добавить автосохранение донатов?
-
-📊 Добавить историю донатов?
-
-🔔 Добавить звуки при донате или достижении цели?
-
-🏆 Сделать уведомление при выполнении цели?
-
-🧮 Изменить логику расчёта урона?
-
-Опиши задачу — и я внесу конкретные изменения в код 👍
-
-
-Вы сказали:
-🎨
-
-ChatGPT сказал:
-Окей 😈 Делаем HUD более жёстким, огненным и “боевым”.
-
-Ниже — апгрейд стиля:
-
-🔥 живое пульсирующее свечение
-
-🔥 объёмная металлическая рамка
-
-🔥 анимированный градиент текста
-
-🔥 эффект жара внутри шкалы
-
-🔥 лёгкий screen-shake при добавлении урона
-
-Просто замени свой <style> целиком на этот 👇
-
-body {
-  margin: 0;
-  background: transparent;
-  font-family: 'Orbitron', sans-serif;
-  color: #fff;
-}
-
-.viewer {
-  width: 520px;
-  padding: 20px;
-}
-
-/* 🔥 HUD */
-.hud {
-  padding: 24px;
-  border-radius: 20px;
-  border: 2px solid #ff2a2a;
-  background: linear-gradient(145deg, rgba(40,0,0,0.95), rgba(15,0,0,0.95));
-  box-shadow:
-    0 0 20px rgba(255,0,0,0.6),
-    inset 0 0 40px rgba(255,60,0,0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-/* 🔥 Пульсация */
-.hud::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(255,0,0,0.15), transparent 70%);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.3; }
-}
-
-.title {
-  text-align: center;
-  font-size: 22px;
-  margin-bottom: 16px;
-  background: linear-gradient(90deg, #ff0000, #ff8800, #ff0000);
-  background-size: 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: fireText 3s linear infinite;
-  letter-spacing: 1px;
-}
-
-@keyframes fireText {
-  0% { background-position: 0%; }
-  100% { background-position: 200%; }
-}
-
-.label {
-  font-size: 14px;
-  color: #ff9b9b;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.value {
-  font-size: 38px;
-  font-weight: 800;
-  color: #ffcc00;
-  text-shadow:
-    0 0 8px #ff6600,
-    0 0 16px #ff0000;
-}
-
-.progress {
-  height: 18px;
-  background: #200;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 2px solid #ff0000;
-  margin: 12px 0;
-  box-shadow: inset 0 0 12px rgba(255,0,0,0.6);
-}
-
-/* 🔥 ОГОНЬ */
-.fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(
-    90deg,
-    #ff0000,
-    #ff4400,
-    #ffaa00,
-    #ff2200,
-    #ff0000
+import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Trophy, Target, Coins, Minus, Plus, RotateCcw, Sparkles, ShieldCheck } from "lucide-react";
+
+export default function FragOrderHudAdminOverlay() {
+  const [startPrice, setStartPrice] = useState(50);
+  const [targetFrags, setTargetFrags] = useState(20);
+  const [doneFrags, setDoneFrags] = useState(7);
+  const [title, setTitle] = useState("Заказ фрагов");
+  const [completionText, setCompletionText] = useState(
+    "Поздравляю, вы закончили уничтожение танков! Заказ выполнен."
   );
-  background-size: 300% 100%;
-  animation: fireMove 1s linear infinite;
-  transition: width 0.4s ease;
-  box-shadow:
-    0 0 12px #ff3300,
-    0 0 20px #ff0000;
-}
 
-@keyframes fireMove {
-  0% { background-position: 0% 0; }
-  100% { background-position: 300% 0; }
-}
+  const remainingFrags = Math.max(targetFrags - doneFrags, 0);
+  const progress = targetFrags > 0 ? Math.min((doneFrags / targetFrags) * 100, 100) : 0;
+  const isCompleted = remainingFrags === 0 && targetFrags > 0;
+  const isLow = !isCompleted && remainingFrags > 0 && remainingFrags <= Math.max(3, Math.ceil(targetFrags * 0.15));
 
-.price {
-  margin-top: 10px;
-  font-size: 15px;
-  color: #ffaa00;
-  letter-spacing: 2px;
-  font-weight: 700;
-  text-shadow: 0 0 10px orange;
-}
+  const progressLabel = useMemo(() => {
+    if (isCompleted) return "Выполнено";
+    if (isLow) return "Почти готово";
+    if (progress >= 60) return "Идёт уверенно";
+    if (progress >= 25) return "В процессе";
+    return "Только начинается";
+  }, [isCompleted, isLow, progress]);
 
-.price-notice {
-  margin-top: 8px;
-  font-size: 15px;
-  text-align: center;
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
+  const hudGlow = isCompleted
+    ? "from-emerald-400/30 via-lime-300/20 to-transparent"
+    : isLow
+    ? "from-red-400/30 via-rose-300/20 to-transparent"
+    : "from-pink-500/30 via-fuchsia-400/20 to-transparent";
 
-.price-up-notice {
-  color: #00ff88;
-  text-shadow: 0 0 12px #00ff88;
-}
+  const progressGradient = isCompleted
+    ? "from-emerald-400 via-lime-300 to-emerald-500"
+    : isLow
+    ? "from-red-500 via-orange-400 to-yellow-300"
+    : "from-fuchsia-500 via-pink-400 to-rose-300";
 
-.price-down-notice {
-  color: #ff3333;
-  text-shadow: 0 0 12px red;
-}
+  const clampInt = (value, min = 0) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return min;
+    return Math.max(Math.round(num), min);
+  };
 
-.show-notice {
-  opacity: 1;
-}
+  const setSafeTarget = (value) => {
+    const nextTarget = clampInt(value, 1);
+    setTargetFrags(nextTarget);
+    setDoneFrags((prev) => Math.min(prev, nextTarget));
+  };
 
-/* 🔥 Админ */
-.admin {
-  margin-top: 40px;
-  padding: 20px;
-  background: #0b0000;
-  border-top: 3px solid red;
-}
+  const setSafeDone = (value) => {
+    const nextDone = clampInt(value, 0);
+    setDoneFrags(Math.min(nextDone, targetFrags));
+  };
 
-input, button {
-  padding: 8px 12px;
-  margin: 4px;
-  font-size: 16px;
-  background: #300;
-  color: #fff;
-  border: 1px solid red;
-  cursor: pointer;
-  transition: 0.2s;
-}
+  const increaseDone = () => setDoneFrags((prev) => Math.min(prev + 1, targetFrags));
+  const decreaseDone = () => setDoneFrags((prev) => Math.max(prev - 1, 0));
+  const increaseTarget = () => setTargetFrags((prev) => prev + 1);
+  const decreaseTarget = () => {
+    setTargetFrags((prev) => {
+      const next = Math.max(prev - 1, 1);
+      setDoneFrags((done) => Math.min(done, next));
+      return next;
+    });
+  };
+  const increasePrice = () => setStartPrice((prev) => prev + 10);
+  const decreasePrice = () => setStartPrice((prev) => Math.max(prev - 10, 0));
 
-button:hover {
-  background: #600;
-  box-shadow: 0 0 12px red;
-  transform: scale(1.05);
-}
-💣 Хочешь ещё жёстче?
-Могу добавить:
+  return (
+    <div className="min-h-screen w-full bg-[#13060b] text-white p-6 md:p-10">
+      <div className="mx-auto max-w-6xl space-y-8">
+        <div className="text-center space-y-3">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight bg-gradient-to-r from-rose-200 via-pink-300 to-fuchsia-200 bg-clip-text text-transparent">
+            HUD заказа фрагов + админ-панель
+          </h1>
+          <p className="text-rose-100/80 text-sm md:text-base max-w-3xl mx-auto">
+            Верхний блок — для зрителей и трансляции. Нижний блок — для ручного управления через OBS-взаимодействие.
+            Оба блока вынесены в отдельные рамки, чтобы их было удобно вырезать по отдельности.
+          </p>
+        </div>
 
-🔥 эффект тряски при донате
+        <Card className="border-rose-300/20 bg-white/5 backdrop-blur-xl shadow-2xl shadow-rose-950/40 rounded-3xl overflow-hidden">
+          <CardHeader className="border-b border-rose-200/10 bg-gradient-to-r from-rose-950/80 via-pink-950/70 to-fuchsia-950/80">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="text-xl md:text-2xl font-extrabold text-rose-50 flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Рамка 1: HUD для зрителей
+              </CardTitle>
+              <Badge className="bg-rose-200/15 text-rose-100 border border-rose-200/20 rounded-full px-4 py-1">
+                Обрезай в OBS отдельно
+              </Badge>
+            </div>
+          </CardHeader>
 
-🔥 вспышку при выполнении цели
+          <CardContent className="p-5 md:p-8">
+            <motion.div
+              animate={isLow ? { x: [0, -2, 2, -1, 1, 0] } : { x: 0 }}
+              transition={isLow ? { duration: 0.45, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+              className="relative rounded-[28px] border border-rose-200/20 bg-gradient-to-br from-[#2a0a16] via-[#3b0e1f] to-[#230812] p-4 md:p-7 shadow-[0_20px_80px_rgba(255,0,102,0.18)] overflow-hidden"
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${hudGlow}`} />
+              <div className="absolute -top-24 -right-16 h-52 w-52 rounded-full bg-pink-400/10 blur-3xl" />
+              <div className="absolute -bottom-20 -left-10 h-52 w-52 rounded-full bg-rose-300/10 blur-3xl" />
 
-🔥 огненные частицы
+              <div className="relative z-10">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-rose-100/80 text-sm uppercase tracking-[0.24em]">
+                      <ShieldCheck className="h-4 w-4" />
+                      Статус заказа
+                    </div>
+                    <h2 className="text-2xl md:text-4xl font-black text-white leading-tight">
+                      {title}
+                    </h2>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Badge className="rounded-full border border-rose-100/15 bg-white/10 text-rose-50 px-4 py-1.5 text-sm">
+                        <Coins className="mr-2 h-4 w-4" /> от {startPrice} ₽
+                      </Badge>
+                      <Badge className="rounded-full border border-rose-100/15 bg-white/10 text-rose-50 px-4 py-1.5 text-sm">
+                        <Target className="mr-2 h-4 w-4" /> {progressLabel}
+                      </Badge>
+                    </div>
+                  </div>
 
-⚡ киберпанк-версию (неон вместо огня)
+                  <div className="min-w-[250px] rounded-2xl border border-white/10 bg-white/8 px-4 py-4 backdrop-blur-md">
+                    <div className="text-xs uppercase tracking-[0.2em] text-rose-100/60 mb-2">Цена заказа</div>
+                    <div className="text-3xl md:text-4xl font-black bg-gradient-to-r from-rose-100 via-pink-200 to-fuchsia-200 bg-clip-text text-transparent">
+                      от {startPrice} ₽
+                    </div>
+                    <div className="text-sm text-rose-100/70 mt-2">
+                      Цена легко повышается через панель ниже.
+                    </div>
+                  </div>
+                </div>
 
-🩸 «кровавую» версию
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-rose-100/60 mb-2">Начало</div>
+                    <div className="flex items-end justify-between gap-2">
+                      <div className="text-4xl font-black text-white">{targetFrags}</div>
+                      <div className="text-sm text-rose-100/70">нужно фрагов</div>
+                    </div>
+                  </div>
 
-🛡 стиль в духе PvP арены
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-rose-100/60 mb-2">Сделано</div>
+                    <div className="flex items-end justify-between gap-2">
+                      <div className="text-4xl font-black text-white">{doneFrags}</div>
+                      <div className="text-sm text-rose-100/70">уничтожено</div>
+                    </div>
+                  </div>
 
-Напиши, в каком стиле ты стримишь — сделаем под твой вайб 😈
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-rose-100/60 mb-2">Осталось</div>
+                    <div className="flex items-end justify-between gap-2">
+                      <div className={`text-4xl font-black ${isLow ? "text-amber-300" : "text-white"}`}>
+                        {remainingFrags}
+                      </div>
+                      <div className="text-sm text-rose-100/70">до конца</div>
+                    </div>
+                  </div>
+                </div>
 
+                <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4 md:p-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-rose-100/60">Прогресс выполнения</div>
+                      <div className="text-sm text-rose-100/70 mt-1">
+                        {doneFrags} из {targetFrags} фрагов выполнено
+                      </div>
+                    </div>
+                    <div className="text-xl font-black text-white">{Math.round(progress)}%</div>
+                  </div>
 
-Вы сказали:
-в пиши все в html
+                  <div className="relative h-5 w-full overflow-hidden rounded-full bg-white/10 border border-white/10">
+                    <motion.div
+                      className={`h-full rounded-full bg-gradient-to-r ${progressGradient}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ type: "spring", stiffness: 80, damping: 18 }}
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)] opacity-60" />
+                  </div>
 
-ChatGPT сказал:
-Вот полностью готовый HTML со всеми огненными эффектами внутри (ничего отдельно подключать не нужно, кроме шрифта как у тебя было).
-Добавлено:
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-xl bg-white/5 px-3 py-2 text-rose-100/80">
+                      Старт: <span className="font-bold text-white">{targetFrags}</span>
+                    </div>
+                    <div className="rounded-xl bg-white/5 px-3 py-2 text-rose-100/80">
+                      Осталось: <span className="font-bold text-white">{remainingFrags}</span>
+                    </div>
+                  </div>
+                </div>
 
-🔥 Пульсация HUD
-🔥 Анимированный огненный текст
-🔥 Усиленная шкала огня
-🔥 Тряска при добавлении урона
-🔥 Вспышка при выполнении цели
-🔥 Экранная вспышка при донате
+                {isLow && !isCompleted && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-amber-100"
+                  >
+                    ⚠️ Осталось совсем немного фрагов. Заказ почти завершён.
+                  </motion.div>
+                )}
 
-Просто замени весь файл целиком 👇
+                {isCompleted && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-4 py-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Trophy className="h-6 w-6 text-emerald-200 mt-0.5" />
+                      <div>
+                        <div className="text-lg md:text-xl font-black text-emerald-100">Заказ завершён</div>
+                        <div className="text-emerald-50/85 mt-1">{completionText}</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </CardContent>
+        </Card>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>🔥 Боевой урон HUD</title>
+        <Card className="border-rose-300/20 bg-white/5 backdrop-blur-xl shadow-2xl shadow-rose-950/40 rounded-3xl overflow-hidden">
+          <CardHeader className="border-b border-rose-200/10 bg-gradient-to-r from-[#251017] via-[#31111d] to-[#1f0c14]">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="text-xl md:text-2xl font-extrabold text-rose-50">
+                Рамка 2: Админ-панель
+              </CardTitle>
+              <Badge className="bg-white/10 text-rose-100 border border-rose-200/20 rounded-full px-4 py-1">
+                Только для тебя, ниже HUD
+              </Badge>
+            </div>
+          </CardHeader>
 
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+          <CardContent className="p-5 md:p-8">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <ControlCard
+                    icon={<Coins className="h-5 w-5" />}
+                    title="Цена"
+                    value={`${startPrice} ₽`}
+                    onMinus={decreasePrice}
+                    onPlus={increasePrice}
+                    hint="Изменяется вручную"
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      value={startPrice}
+                      onChange={(e) => setStartPrice(clampInt(e.target.value, 0))}
+                      className="bg-white/10 border-white/10 text-white placeholder:text-rose-100/40"
+                    />
+                  </ControlCard>
 
-<style>
-body {
-  margin: 0;
-  background: transparent;
-  font-family: 'Orbitron', sans-serif;
-  color: #fff;
-  overflow: hidden;
-}
+                  <ControlCard
+                    icon={<Target className="h-5 w-5" />}
+                    title="Начало"
+                    value={`${targetFrags}`}
+                    onMinus={decreaseTarget}
+                    onPlus={increaseTarget}
+                    hint="Сколько всего нужно"
+                  >
+                    <Input
+                      type="number"
+                      min={1}
+                      value={targetFrags}
+                      onChange={(e) => setSafeTarget(e.target.value)}
+                      className="bg-white/10 border-white/10 text-white placeholder:text-rose-100/40"
+                    />
+                  </ControlCard>
 
-.viewer {
-  width: 520px;
-  padding: 20px;
-}
+                  <ControlCard
+                    icon={<Trophy className="h-5 w-5" />}
+                    title="Сделано"
+                    value={`${doneFrags}`}
+                    onMinus={decreaseDone}
+                    onPlus={increaseDone}
+                    hint="Сколько уже набито"
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      max={targetFrags}
+                      value={doneFrags}
+                      onChange={(e) => setSafeDone(e.target.value)}
+                      className="bg-white/10 border-white/10 text-white placeholder:text-rose-100/40"
+                    />
+                  </ControlCard>
+                </div>
 
-/* 🔥 HUD */
-.hud {
-  padding: 24px;
-  border-radius: 20px;
-  border: 2px solid #ff2a2a;
-  background: linear-gradient(145deg, rgba(40,0,0,0.95), rgba(15,0,0,0.95));
-  box-shadow:
-    0 0 20px rgba(255,0,0,0.6),
-    inset 0 0 40px rgba(255,60,0,0.2);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s;
-}
+                <div className="rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6 space-y-5">
+                  <div>
+                    <div className="text-sm uppercase tracking-[0.22em] text-rose-100/55 mb-2">Тексты и подписи</div>
+                    <Separator className="bg-white/10" />
+                  </div>
 
-/* Пульсация */
-.hud::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(255,0,0,0.2), transparent 70%);
-  animation: pulse 2s infinite;
-  pointer-events: none;
-}
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <div className="text-sm text-rose-100/75 mb-2">Заголовок HUD</div>
+                      <Input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="bg-white/10 border-white/10 text-white placeholder:text-rose-100/40"
+                      />
+                    </div>
 
-@keyframes pulse {
-  0% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.3; }
-}
+                    <div>
+                      <div className="text-sm text-rose-100/75 mb-2">Текст завершения</div>
+                      <Input
+                        value={completionText}
+                        onChange={(e) => setCompletionText(e.target.value)}
+                        className="bg-white/10 border-white/10 text-white placeholder:text-rose-100/40"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-/* Тряска */
-.shake {
-  animation: shake 0.3s;
-}
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-rose-400/10 via-pink-400/10 to-fuchsia-400/10 p-5 md:p-6">
+                  <div className="text-sm uppercase tracking-[0.22em] text-rose-100/55">Быстрые действия</div>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <Button className="rounded-2xl h-12 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={increaseDone}>
+                      +1 фраг
+                    </Button>
+                    <Button className="rounded-2xl h-12 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={decreaseDone}>
+                      -1 фраг
+                    </Button>
+                    <Button className="rounded-2xl h-12 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={increasePrice}>
+                      +10 ₽
+                    </Button>
+                    <Button className="rounded-2xl h-12 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={decreasePrice}>
+                      -10 ₽
+                    </Button>
+                  </div>
 
-@keyframes shake {
-  0% { transform: translate(0); }
-  25% { transform: translate(-5px, 3px); }
-  50% { transform: translate(5px, -3px); }
-  75% { transform: translate(-3px, 2px); }
-  100% { transform: translate(0); }
-}
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <Button className="rounded-2xl h-12 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={increaseTarget}>
+                      +1 к цели
+                    </Button>
+                    <Button className="rounded-2xl h-12 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={decreaseTarget}>
+                      -1 к цели
+                    </Button>
+                  </div>
 
-.title {
-  text-align: center;
-  font-size: 22px;
-  margin-bottom: 16px;
-  background: linear-gradient(90deg, #ff0000, #ff8800, #ff0000);
-  background-size: 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: fireText 3s linear infinite;
-  letter-spacing: 1px;
-}
+                  <Button
+                    className="mt-3 w-full rounded-2xl h-12 bg-rose-500/80 hover:bg-rose-500 text-white"
+                    onClick={() => {
+                      setStartPrice(50);
+                      setTargetFrags(20);
+                      setDoneFrags(0);
+                      setTitle("Заказ фрагов");
+                      setCompletionText("Поздравляю, вы закончили уничтожение танков! Заказ выполнен.");
+                    }}
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Сбросить к стартовым значениям
+                  </Button>
+                </div>
 
-@keyframes fireText {
-  0% { background-position: 0%; }
-  100% { background-position: 200%; }
-}
+                <div className="rounded-3xl border border-white/10 bg-black/20 p-5 md:p-6">
+                  <div className="text-sm uppercase tracking-[0.22em] text-rose-100/55">Сводка</div>
+                  <div className="mt-4 space-y-3">
+                    <SummaryRow label="Текущая цена" value={`от ${startPrice} ₽`} />
+                    <SummaryRow label="Нужно фрагов" value={`${targetFrags}`} />
+                    <SummaryRow label="Сделано" value={`${doneFrags}`} />
+                    <SummaryRow label="Осталось" value={`${remainingFrags}`} />
+                    <SummaryRow label="Статус" value={isCompleted ? "Завершено" : isLow ? "Почти завершено" : "Активно"} />
+                  </div>
+                </div>
 
-.label {
-  font-size: 14px;
-  color: #ff9b9b;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.value {
-  font-size: 38px;
-  font-weight: 800;
-  color: #ffcc00;
-  text-shadow:
-    0 0 8px #ff6600,
-    0 0 16px #ff0000;
-}
-
-.progress {
-  height: 18px;
-  background: #200;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 2px solid #ff0000;
-  margin: 12px 0;
-  box-shadow: inset 0 0 12px rgba(255,0,0,0.6);
-}
-
-.fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(
-    90deg,
-    #ff0000,
-    #ff4400,
-    #ffaa00,
-    #ff2200,
-    #ff0000
-  );
-  background-size: 300% 100%;
-  animation: fireMove 1s linear infinite;
-  transition: width 0.4s ease;
-  box-shadow:
-    0 0 12px #ff3300,
-    0 0 20px #ff0000;
-}
-
-@keyframes fireMove {
-  0% { background-position: 0% 0; }
-  100% { background-position: 300% 0; }
-}
-
-.price {
-  margin-top: 10px;
-  font-size: 15px;
-  color: #ffaa00;
-  letter-spacing: 2px;
-  font-weight: 700;
-  text-shadow: 0 0 10px orange;
-}
-
-.price-notice {
-  margin-top: 8px;
-  font-size: 15px;
-  text-align: center;
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.price-up-notice {
-  color: #00ff88;
-  text-shadow: 0 0 12px #00ff88;
-}
-
-.price-down-notice {
-  color: #ff3333;
-  text-shadow: 0 0 12px red;
-}
-
-.show-notice {
-  opacity: 1;
-}
-
-/* Вспышка */
-.flash {
-  position: fixed;
-  inset: 0;
-  background: white;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.flash.active {
-  animation: flashAnim 0.4s;
-}
-
-@keyframes flashAnim {
-  0% { opacity: 0.8; }
-  100% { opacity: 0; }
-}
-
-.admin {
-  margin-top: 40px;
-  padding: 20px;
-  background: #0b0000;
-  border-top: 3px solid red;
-}
-
-input, button {
-  padding: 8px 12px;
-  margin: 4px;
-  font-size: 16px;
-  background: #300;
-  color: #fff;
-  border: 1px solid red;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  background: #600;
-  box-shadow: 0 0 12px red;
-  transform: scale(1.05);
-}
-</style>
-</head>
-
-<body>
-
-<div class="flash" id="flash"></div>
-
-<div class="viewer">
-  <div class="hud" id="hud">
-    <div class="title">⚔️ Боевой урон — только в рандоме ⚔️</div>
-
-    <div class="label">Нанесено:</div>
-    <div class="value" id="viewerCurrent">0</div>
-
-    <div class="progress">
-      <div class="fill" id="bar"></div>
+                <div className="rounded-3xl border border-dashed border-rose-200/20 bg-white/5 p-5">
+                  <div className="text-sm font-bold text-rose-100">Что уже работает</div>
+                  <ul className="mt-3 space-y-2 text-sm text-rose-50/80 list-disc pl-5">
+                    <li>отдельная рамка HUD для зрителей;</li>
+                    <li>отдельная рамка админ-панели для OBS Interaction;</li>
+                    <li>ручное изменение цены, цели, прогресса и текстов;</li>
+                    <li>анимация тряски при малом остатке;</li>
+                    <li>поздравление при полном завершении заказа.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
-
-    <div class="label">Осталось:</div>
-    <div class="value" id="viewerLeft">0</div>
-
-    <div class="price" id="priceText">100 ₽ = 2000 урона</div>
-    <div id="priceNotice" class="price-notice"></div>
-  </div>
-</div>
-
-<div class="admin">
-  <div class="label">Нанесено (добавить):</div>
-  <input type="number" id="adminAddDamage">
-  <button onclick="addDamage()">🔥 Добавить</button>
-
-  <br><br>
-
-  <div class="label">Всего нужно нанести:</div>
-  <input type="number" id="adminGoal">
-  <button onclick="setGoal()">🎯 Установить цель</button>
-
-  <br><br>
-
-  <div class="label">Цена за донат:</div>
-  <button onclick="pricePlus()">💰 +50 ₽</button>
-  <button onclick="priceMinus()">💰 -50 ₽</button>
-
-  <br><br>
-
-  <div class="label">Ввести донат (в рублях):</div>
-  <input type="number" id="adminDonate">
-  <button onclick="addDonate()">💸 Добавить донат</button>
-</div>
-
-<script>
-let state = {
-  current: 0,
-  goal: 0,
-  price: 100,
-  damagePerPrice: 2000
-};
-
-function update() {
-  const left = Math.max(0, state.goal - state.current);
-  const percent = state.goal > 0
-    ? Math.min(100, (state.current / state.goal) * 100)
-    : 0;
-
-  viewerCurrent.textContent = Math.floor(state.current);
-  viewerLeft.textContent = Math.floor(left);
-  bar.style.width = percent + "%";
-  priceText.textContent = `${state.price} ₽ = ${state.damagePerPrice} урона`;
-
-  if (state.goal > 0 && state.current >= state.goal) {
-    flashEffect();
-  }
+  );
 }
 
-function flashEffect() {
-  flash.classList.add("active");
-  setTimeout(() => flash.classList.remove("active"), 400);
+function ControlCard({ icon, title, value, hint, onMinus, onPlus, children }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-black/20 p-4 md:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-rose-100">
+          <div className="rounded-xl bg-white/10 p-2">{icon}</div>
+          <div>
+            <div className="font-bold text-white">{title}</div>
+            <div className="text-xs text-rose-100/55">{hint}</div>
+          </div>
+        </div>
+        <div className="text-xl font-black text-white">{value}</div>
+      </div>
+
+      <div className="mt-4">{children}</div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <Button className="rounded-2xl h-11 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={onMinus}>
+          <Minus className="mr-2 h-4 w-4" /> Уменьшить
+        </Button>
+        <Button className="rounded-2xl h-11 bg-white/10 hover:bg-white/20 text-white border border-white/10" onClick={onPlus}>
+          <Plus className="mr-2 h-4 w-4" /> Увеличить
+        </Button>
+      </div>
+    </div>
+  );
 }
 
-function shakeHUD() {
-  hud.classList.add("shake");
-  setTimeout(() => hud.classList.remove("shake"), 300);
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl bg-white/5 px-4 py-3">
+      <div className="text-rose-100/70">{label}</div>
+      <div className="font-bold text-white">{value}</div>
+    </div>
+  );
 }
-
-function showPriceNotice(text, type) {
-  const notice = document.getElementById("priceNotice");
-  notice.textContent = text;
-  notice.className = "price-notice show-notice " + type;
-  setTimeout(() => notice.className = "price-notice", 2000);
-}
-
-function pricePlus() {
-  state.price += 50;
-  showPriceNotice("Цена увеличена на 50 ₽", "price-up-notice");
-  update();
-}
-
-function priceMinus() {
-  if (state.price > 50) {
-    state.price -= 50;
-    showPriceNotice("Цена уменьшена на 50 ₽", "price-down-notice");
-    update();
-  }
-}
-
-function addDamage() {
-  const value = Number(adminAddDamage.value);
-  if (value <= 0) return;
-  state.current += value;
-  adminAddDamage.value = "";
-  shakeHUD();
-  update();
-}
-
-function setGoal() {
-  const value = Number(adminGoal.value);
-  if (value <= 0) return;
-  state.goal = value;
-  adminGoal.value = "";
-  update();
-}
-
-function addDonate() {
-  const rub = Number(adminDonate.value);
-  if (rub <= 0) return;
-  const damage = (rub / state.price) * state.damagePerPrice;
-  state.goal += damage;
-  adminDonate.value = "";
-  flashEffect();
-  update();
-}
-
-update();
-</script>
-
-</body>
-</html>
-Если хочешь — могу сделать:
-
-💀 ультра-агрессивную версию
-⚡ неоновый киберпанк
-🩸 кровавый PvP стиль
-🏆 анимацию «ЦЕЛЬ ВЫПОЛНЕНА» поверх HUD
-
-Выбирай режим 😈
-
-Is this conversation helpful so far?
-
-
-
-
-
-
